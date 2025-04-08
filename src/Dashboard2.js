@@ -5,25 +5,31 @@ export default function Dashboard2({ ownerId, timeRange }) {
   const [energyData, setEnergyData] = useState(null);
   const [ghgData, setGhgData] = useState(null);
 
+  const DARK_ORANGE = "#ff6f00";
+  const DARK_ORANGE_BG = "rgba(255, 111, 0, 0.3)";
+
+  const isMinuteRange = timeRange === "m";
+  const chartType = isMinuteRange ? "line" : "bar";
+
   // Fetch Energy Consumption Stats
   useEffect(() => {
     if (!ownerId || !timeRange) return;
-  
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_energy_consumption/?owner=${ownerId}&range=${timeRange}`)
 
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_energy_consumption/?owner=${ownerId}&range=${timeRange}`)
       .then((res) => res.json())
       .then((data) => {
         const timeLabels = data.data.map((entry) => entry.time);
-        const energyConsumed = data.data.map((entry) => entry.energy_diff); // <- updated key
-  
+        const energyConsumed = data.data.map((entry) => entry.energy_diff);
+
         setEnergyData({
           labels: timeLabels,
           datasets: [
             {
               label: "Energy Consumed (kWh)",
+              type: chartType,
               data: energyConsumed,
-              borderColor: "#0288d1",
-              backgroundColor: "rgba(2, 136, 209, 0.3)",
+              borderColor: DARK_ORANGE,
+              backgroundColor: DARK_ORANGE_BG,
               fill: true,
               tension: 0.4,
             },
@@ -32,35 +38,36 @@ export default function Dashboard2({ ownerId, timeRange }) {
       })
       .catch((err) => console.error("Error fetching energy consumption:", err));
   }, [ownerId, timeRange]);
-  
 
   // Fetch GHG Emissions
   useEffect(() => {
     if (!ownerId || !timeRange) return;
 
     fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_ghg_emission/?owner=${ownerId}&range=${timeRange}`)
-
       .then((res) => res.json())
       .then((data) => {
         const timeLabels = data.data.map((entry) => entry.time);
         const ghg = data.data.map((entry) => entry.ghg_emission);
         const energy = data.data.map((entry) => entry.energy_diff);
+
         setGhgData({
           labels: timeLabels,
           datasets: [
             {
               label: "GHG Emission (g)",
+              type: chartType,
               data: ghg,
-              borderColor: "#6a1b9a",
-              backgroundColor: "rgba(106, 27, 154, 0.3)",
+              borderColor: DARK_ORANGE,
+              backgroundColor: DARK_ORANGE_BG,
               fill: true,
               tension: 0.4,
             },
             {
               label: "Energy Used (kWh)",
+              type: chartType,
               data: energy,
-              borderColor: "#ff8f00",
-              backgroundColor: "rgba(255, 143, 0, 0.3)",
+              borderColor: DARK_ORANGE,
+              backgroundColor: DARK_ORANGE_BG,
               fill: true,
               tension: 0.4,
             },
@@ -70,21 +77,21 @@ export default function Dashboard2({ ownerId, timeRange }) {
       .catch((err) => console.error("Error fetching GHG emissions:", err));
   }, [ownerId, timeRange]);
 
-  const energyOptions = {
+  const chartBaseOptions = (titleText, yLabel) => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { position: "top" },
       title: {
         display: true,
-        text: `Energy Consumption Over Time (Owner ${ownerId})`,
+        text: titleText,
       },
     },
     scales: {
       y: {
         title: {
           display: true,
-          text: "Energy (kWh)",
+          text: yLabel,
         },
       },
       x: {
@@ -94,41 +101,21 @@ export default function Dashboard2({ ownerId, timeRange }) {
         },
       },
     },
-  };
-
-  const ghgOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: "top" },
-      title: {
-        display: true,
-        text: `GHG Emissions & Energy Usage (Owner ${ownerId})`,
-      },
-    },
-    scales: {
-      y: {
-        title: {
-          display: true,
-          text: "Values (g / kWh)",
-        },
-      },
-      x: {
-        title: {
-          display: true,
-          text: "Time",
-        },
-      },
-    },
-  };
+  });
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
       {!energyData ? (
         <p>Loading energy consumption chart...</p>
       ) : (
         <div style={{ width: "800px", height: "400px", marginBottom: "2rem" }}>
-          <MyChartComponent chartData={energyData} chartOptions={energyOptions} />
+          <MyChartComponent
+            chartData={energyData}
+            chartOptions={chartBaseOptions(
+              `Energy Consumption Over Time (Owner ${ownerId})`,
+              "Energy (kWh)"
+            )}
+          />
         </div>
       )}
 
@@ -136,7 +123,13 @@ export default function Dashboard2({ ownerId, timeRange }) {
         <p>Loading GHG emissions chart...</p>
       ) : (
         <div style={{ width: "800px", height: "400px", marginBottom: "2rem" }}>
-          <MyChartComponent chartData={ghgData} chartOptions={ghgOptions} />
+          <MyChartComponent
+            chartData={ghgData}
+            chartOptions={chartBaseOptions(
+              `GHG Emissions & Energy Usage (Owner ${ownerId})`,
+              "Values (g / kWh)"
+            )}
+          />
         </div>
       )}
     </div>

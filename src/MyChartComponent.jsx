@@ -1,28 +1,38 @@
-// MyChartComponent.jsx
+// MyChartComponent.js
 import React from "react";
-import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
   LineElement,
   PointElement,
-  LinearScale,
   Title,
-  CategoryScale,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
+import { Chart } from "react-chartjs-2";
 
-// Register chart components
+// ✅ Register chart elements
 ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
   LineElement,
   PointElement,
-  LinearScale,
   Title,
-  CategoryScale,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
-export default function MyChartComponent({ chartData, chartOptions }) {
-  return <Line data={chartData} options={chartOptions} />;
+export default function MyChartComponent({ chartData, chartOptions, chartType = "bar" }) {
+  if (!chartData) return <p>Loading...</p>;
+
+  return (
+    <div style={{ width: "100%", height: "100%" }}>
+      <Chart type={chartType} data={chartData} options={chartOptions} />
+    </div>
+  );
 }

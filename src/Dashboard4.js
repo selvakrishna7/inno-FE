@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -13,12 +15,14 @@ export default function Dashboard4({ ownerId, timeRange }) {
   const [currentData, setCurrentData] = useState([]);
   const [frequencyData, setFrequencyData] = useState([]);
 
-  // Fetch Current Data
+  const isMinuteRange = timeRange === "m";
+
   useEffect(() => {
     if (!ownerId || !timeRange) return;
 
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_current_stats/?owner=${ownerId}&range=${timeRange}`)
-
+    fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/get_current_stats/?owner=${ownerId}&range=${timeRange}`
+    )
       .then((res) => res.json())
       .then((data) => {
         const formatted = data.data.map((entry) => ({
@@ -32,12 +36,12 @@ export default function Dashboard4({ ownerId, timeRange }) {
       .catch((err) => console.error("Error fetching current stats:", err));
   }, [ownerId, timeRange]);
 
-  // Fetch Frequency Data
   useEffect(() => {
     if (!ownerId || !timeRange) return;
 
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_frequency_stats/?owner=${ownerId}&range=${timeRange}`)
-
+    fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/get_frequency_stats/?owner=${ownerId}&range=${timeRange}`
+    )
       .then((res) => res.json())
       .then((data) => {
         const formatted = data.data.map((entry) => ({
@@ -54,31 +58,70 @@ export default function Dashboard4({ ownerId, timeRange }) {
       {/* Current Chart */}
       <div className="graph-card" style={{ width: "50%" }}>
         <h2 className="text-xl font-semibold mb-2">🔋 Current Over Time (A)</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={currentData}>
-            <XAxis dataKey="time" stroke="#fff" />
-            <YAxis stroke="#fff" />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="a1" stroke="#ff5252" name="A1" />
-            <Line type="monotone" dataKey="a2" stroke="#4caf50" name="A2" />
-            <Line type="monotone" dataKey="a3" stroke="#2196f3" name="A3" />
-          </LineChart>
-        </ResponsiveContainer>
+        {currentData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            {isMinuteRange ? (
+              <LineChart data={currentData}>
+                <XAxis dataKey="time" stroke="#fff" />
+                <YAxis stroke="#fff" />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="a1" stroke="#e91e63" name="A1" />
+                <Line type="monotone" dataKey="a2" stroke="#00bcd4" name="A2" />
+                <Line type="monotone" dataKey="a3" stroke="#ffc107" name="A3" />
+              </LineChart>
+            ) : (
+              <BarChart data={currentData}>
+                <XAxis dataKey="time" stroke="#fff" />
+                <YAxis stroke="#fff" />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="a1" fill="#e91e63" name="A1" />
+                <Bar dataKey="a2" fill="#00bcd4" name="A2" />
+                <Bar dataKey="a3" fill="#ffc107" name="A3" />
+              </BarChart>
+            )}
+          </ResponsiveContainer>
+        ) : (
+          <p>Loading current data...</p>
+        )}
       </div>
 
       {/* Frequency Chart */}
       <div className="graph-card" style={{ width: "50%" }}>
         <h2 className="text-xl font-semibold mb-2">⏱ Frequency Over Time (Hz)</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={frequencyData}>
-            <XAxis dataKey="time" stroke="#fff" />
-            <YAxis stroke="#fff" />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="frequency" stroke="#ffa500" name="Frequency" />
-          </LineChart>
-        </ResponsiveContainer>
+        {frequencyData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            {isMinuteRange ? (
+              <LineChart data={frequencyData}>
+                <XAxis dataKey="time" stroke="#fff" />
+                <YAxis stroke="#fff" />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="frequency"
+                  stroke="#9c27b0"
+                  name="Frequency"
+                />
+              </LineChart>
+            ) : (
+              <BarChart data={frequencyData}>
+                <XAxis dataKey="time" stroke="#fff" />
+                <YAxis stroke="#fff" />
+                <Tooltip />
+                <Legend />
+                <Bar
+                  dataKey="frequency"
+                  fill="#9c27b0"
+                  name="Frequency"
+                />
+              </BarChart>
+            )}
+          </ResponsiveContainer>
+        ) : (
+          <p>Loading frequency data...</p>
+        )}
       </div>
     </div>
   );
