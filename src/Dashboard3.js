@@ -39,7 +39,7 @@ export default function Dashboard3({ ownerId, timeRange }) {
     if (!ownerId || !timeRange) return;
 
     fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/get_voltage_stats/?owner=${ownerId}&range=${timeRange}`
+      `${process.env.REACT_APP_BACKEND_URL}/api/get_power_factor/?owner=${ownerId}&range=${timeRange}`
     )
     
       .then((res) => res.json())
