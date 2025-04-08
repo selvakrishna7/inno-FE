@@ -9,7 +9,8 @@ export default function Dashboard2({ ownerId, timeRange }) {
   useEffect(() => {
     if (!ownerId || !timeRange) return;
   
-    fetch(`http://localhost:8000/api/get_energy_consumption/?owner=${ownerId}&range=${timeRange}`)
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_energy_consumption/?owner=${ownerId}&range=${timeRange}`)
+
       .then((res) => res.json())
       .then((data) => {
         const timeLabels = data.data.map((entry) => entry.time);
@@ -37,7 +38,8 @@ export default function Dashboard2({ ownerId, timeRange }) {
   useEffect(() => {
     if (!ownerId || !timeRange) return;
 
-    fetch(`http://localhost:8000/api/get_ghg_emission/?owner=${ownerId}&range=${timeRange}`)
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_ghg_emission/?owner=${ownerId}&range=${timeRange}`)
+
       .then((res) => res.json())
       .then((data) => {
         const timeLabels = data.data.map((entry) => entry.time);

@@ -18,8 +18,9 @@ export default function Dashboard3({ ownerId, timeRange }) {
     if (!ownerId || !timeRange) return;
 
     fetch(
-      `http://localhost:8000/api/get_voltage_stats/?owner=${ownerId}&range=${timeRange}`
+      `${process.env.REACT_APP_BACKEND_URL}/api/get_voltage_stats/?owner=${ownerId}&range=${timeRange}`
     )
+    
       .then((res) => res.json())
       .then((data) => {
         const transformed = data.data.map((entry) => ({
@@ -38,8 +39,9 @@ export default function Dashboard3({ ownerId, timeRange }) {
     if (!ownerId || !timeRange) return;
 
     fetch(
-      `http://localhost:8000/api/get_power_factor/?owner=${ownerId}&range=${timeRange}`
+      `${process.env.REACT_APP_BACKEND_URL}/api/get_voltage_stats/?owner=${ownerId}&range=${timeRange}`
     )
+    
       .then((res) => res.json())
       .then((data) => {
         const pfData = data.data.map((entry) => ({

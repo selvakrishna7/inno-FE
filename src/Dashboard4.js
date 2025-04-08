@@ -17,7 +17,8 @@ export default function Dashboard4({ ownerId, timeRange }) {
   useEffect(() => {
     if (!ownerId || !timeRange) return;
 
-    fetch(`http://localhost:8000/api/get_current_stats/?owner=${ownerId}&range=${timeRange}`)
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_current_stats/?owner=${ownerId}&range=${timeRange}`)
+
       .then((res) => res.json())
       .then((data) => {
         const formatted = data.data.map((entry) => ({
@@ -35,7 +36,8 @@ export default function Dashboard4({ ownerId, timeRange }) {
   useEffect(() => {
     if (!ownerId || !timeRange) return;
 
-    fetch(`http://localhost:8000/api/get_frequency_stats/?owner=${ownerId}&range=${timeRange}`)
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_frequency_stats/?owner=${ownerId}&range=${timeRange}`)
+
       .then((res) => res.json())
       .then((data) => {
         const formatted = data.data.map((entry) => ({

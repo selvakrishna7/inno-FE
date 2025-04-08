@@ -7,7 +7,9 @@ export default function Dashboard1({ ownerId }) {
   useEffect(() => {
     if (!ownerId) return;
 
-    fetch(`http://localhost:8000/api/get_energy_stats/?owner=${ownerId}`)
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_energy_stats/?owner=${ownerId}`)
+
+
       .then((res) => res.json())
       .then((data) => {
         setStats(data);

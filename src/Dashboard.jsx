@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [timeRange, setTimeRange] = useState("d"); // default: daily view
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/owners/")
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/owners/`)
       .then((res) => res.json())
       .then((data) => {
         const filtered = data.unique_owners.filter((owner) => owner !== null);
