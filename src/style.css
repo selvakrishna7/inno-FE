@@ -1,0 +1,75 @@
+/* src/style.css */
+
+body {
+  background-color: #000;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Card styling */
+.card {
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Grid title and section headings */
+h1,
+h2 {
+  letter-spacing: 0.5px;
+}
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+h2 {
+  font-size: 1.25rem;
+  color: #fff;
+  margin-bottom: 0.75rem;
+}
+
+/* Percentage trend arrows */
+.trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 500;
+}
+
+.trend.down {
+  color: #00e676; /* Green */
+}
+
+.part1 {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  gap: 31rem; /* or gap: 4px; depending on spacing */
+  flex-wrap: wrap; /* good for responsiveness */
+}
+
+.chart-container {
+  padding: 1rem;
+  background-color: #111;
+  border-radius: 1rem;
+  margin-top: 1rem;
+}
+
+/* Responsive spacing adjustments */
+@media (max-width: 640px) {
+  .grid {
+    gap: 1rem;
+  }
+}
+

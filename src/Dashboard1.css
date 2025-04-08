@@ -1,0 +1,61 @@
+body {
+    background-color: #000;
+    color: white;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .main-content {
+    padding: 2rem;
+    background-color: #000; 
+    width: -moz-available !important;
+  }
+  
+  .card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .card-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+  }
+  
+  .orange-card {
+    background: rgba(255, 165, 0, 0.1);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    min-width: 280px;
+    max-width: 350px;
+    flex: 1 1 280px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px rgba(255, 165, 0, 0.2);
+    transition: transform 0.3s ease;
+    color: white;
+  }
+  
+  .orange-card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-top: 0.25rem;
+  }
+  
+  .unit {
+    font-size: 0.8rem;
+  }
+  
+  .change {
+    font-size: 0.85rem;
+    color: #90ee90; /* light green */
+    margin-top: 0.5rem;
+  }
+  

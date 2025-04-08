@@ -14,7 +14,7 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: #373737;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -35,4 +35,11 @@
   to {
     transform: rotate(360deg);
   }
+}
+.graph-card {
+  background-color: #1e1e1e;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  color: white;
 }
