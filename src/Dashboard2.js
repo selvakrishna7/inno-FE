@@ -9,11 +9,13 @@ export default function Dashboard2({ ownerId, timeRange }) {
   const DARK_ORANGE_BG = "rgba(255, 111, 0, 0.3)";
   const chartType = timeRange === "m" ? "line" : "bar";
 
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
   const getFixedLabels = () => {
     if (timeRange === "m") return Array.from({ length: 60 }, (_, i) => (i + 1).toString());
     if (timeRange === "h") return Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
-    if (timeRange === "d") return Array.from({ length: 30 }, (_, i) => (i + 1).toString());
-    if (timeRange === "mo") return Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+    if (timeRange === "d") return Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, "0"));
+    if (timeRange === "month") return Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0"));
     if (timeRange === "y") {
       const currentYear = new Date().getFullYear();
       return Array.from({ length: 5 }, (_, i) => (currentYear - 4 + i).toString());
@@ -21,12 +23,19 @@ export default function Dashboard2({ ownerId, timeRange }) {
     return [];
   };
 
+  const getDisplayLabels = (labels) => {
+    if (timeRange === "month") {
+      return labels.map((label) => monthNames[parseInt(label, 10) - 1] || label);
+    }
+    return labels;
+  };
+
   const extractLabel = (entryTime) => {
     try {
       if (timeRange === "m") return parseInt(entryTime.split(":")[1], 10).toString();
       if (timeRange === "h") return entryTime.split(" ")[1].split(":")[0];
-      if (timeRange === "d") return parseInt(entryTime.split("-")[2], 10).toString();
-      if (timeRange === "mo") return parseInt(entryTime.split("-")[1], 10).toString();
+      if (timeRange === "d") return entryTime.split("-")[2].padStart(2, "0");
+      if (timeRange === "month") return entryTime.split("-")[1]; // e.g., "01", "02"
       if (timeRange === "y") return entryTime.split("-")[0];
     } catch (error) {
       console.warn("Invalid time format:", entryTime);
@@ -60,15 +69,16 @@ export default function Dashboard2({ ownerId, timeRange }) {
           }
         }
 
-        const energyConsumed = fixedLabels.map((label) => energyMap[label] ?? 0);
+        const values = fixedLabels.map((label) => energyMap[label] ?? 0);
+        const displayLabels = getDisplayLabels(fixedLabels);
 
         setEnergyData({
-          labels: fixedLabels,
+          labels: displayLabels,
           datasets: [
             {
               label: "Energy Consumed (kWh)",
               type: chartType,
-              data: energyConsumed,
+              data: values,
               borderColor: DARK_ORANGE,
               backgroundColor: DARK_ORANGE_BG,
               fill: true,
@@ -98,9 +108,10 @@ export default function Dashboard2({ ownerId, timeRange }) {
 
         const ghgValues = fixedLabels.map((label) => ghgMap[label] ?? 0);
         const energyValues = fixedLabels.map((label) => energyMap[label] ?? 0);
+        const displayLabels = getDisplayLabels(fixedLabels);
 
         setGhgData({
-          labels: fixedLabels,
+          labels: displayLabels,
           datasets: [
             {
               label: "GHG Emission (g)",
@@ -176,44 +187,24 @@ export default function Dashboard2({ ownerId, timeRange }) {
         whiteSpace: "nowrap",
       }}
     >
-      <div
-        style={{
-          width: "700px",
-          height: "400px",
-          minWidth: "700px",
-          maxWidth: "700px",
-        }}
-      >
+      <div style={{ width: "700px", height: "400px" }}>
         {!energyData ? (
           <p>Loading energy consumption chart...</p>
         ) : (
           <MyChartComponent
             chartData={energyData}
-            chartOptions={chartBaseOptions(
-              `Energy Consumption (Owner ${ownerId})`,
-              "Energy (kWh)"
-            )}
+            chartOptions={chartBaseOptions(`Energy Consumption (Owner ${ownerId})`, "Energy (kWh)")}
           />
         )}
       </div>
 
-      <div
-        style={{
-          width: "700px",
-          height: "400px",
-          minWidth: "700px",
-          maxWidth: "700px",
-        }}
-      >
+      <div style={{ width: "700px", height: "400px" }}>
         {!ghgData ? (
           <p>Loading GHG emissions chart...</p>
         ) : (
           <MyChartComponent
             chartData={ghgData}
-            chartOptions={chartBaseOptions(
-              `GHG Emissions & Energy (Owner ${ownerId})`,
-              "Values (g / kWh)"
-            )}
+            chartOptions={chartBaseOptions(`GHG Emissions & Energy (Owner ${ownerId})`, "Values (g / kWh)")}
           />
         )}
       </div>
