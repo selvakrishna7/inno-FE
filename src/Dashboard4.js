@@ -17,38 +17,84 @@ export default function Dashboard4({ ownerId, timeRange }) {
 
   const isMinuteRange = timeRange === "m";
 
+  const formatTooltip = (value, name) => [`${parseFloat(value).toFixed(6)}`, name];
+
+  // Current Data Fetch
   useEffect(() => {
     if (!ownerId || !timeRange) return;
 
-    fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/get_current_stats/?owner=${ownerId}&range=${timeRange}`
-    )
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_current_stats/?owner=${ownerId}&range=${timeRange}`)
       .then((res) => res.json())
       .then((data) => {
-        const formatted = data.data.map((entry) => ({
-          time: entry.time,
-          a1: entry.a1,
-          a2: entry.a2,
-          a3: entry.a3,
-        }));
-        setCurrentData(formatted);
+        if (isMinuteRange) {
+          const minuteMap = {};
+          data.data.forEach((entry) => {
+            const minute = parseInt(entry.time.split(":")[1], 10);
+            if (!(minute in minuteMap)) {
+              minuteMap[minute] = {
+                time: minute.toString(),
+                a1: entry.a1,
+                a2: entry.a2,
+                a3: entry.a3,
+              };
+            }
+          });
+
+          const fixedLabels = Array.from({ length: 60 }, (_, i) => (i + 1).toString());
+          const aligned = fixedLabels.map((label) => minuteMap[parseInt(label)] ?? {
+            time: label,
+            a1: 0,
+            a2: 0,
+            a3: 0,
+          });
+
+          setCurrentData(aligned);
+        } else {
+          const formatted = data.data.map((entry) => ({
+            time: entry.time,
+            a1: entry.a1,
+            a2: entry.a2,
+            a3: entry.a3,
+          }));
+          setCurrentData(formatted);
+        }
       })
       .catch((err) => console.error("Error fetching current stats:", err));
   }, [ownerId, timeRange]);
 
+  // Frequency Data Fetch
   useEffect(() => {
     if (!ownerId || !timeRange) return;
 
-    fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/get_frequency_stats/?owner=${ownerId}&range=${timeRange}`
-    )
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_frequency_stats/?owner=${ownerId}&range=${timeRange}`)
       .then((res) => res.json())
       .then((data) => {
-        const formatted = data.data.map((entry) => ({
-          time: entry.time,
-          frequency: entry.frequency,
-        }));
-        setFrequencyData(formatted);
+        if (isMinuteRange) {
+          const minuteMap = {};
+          data.data.forEach((entry) => {
+            const minute = parseInt(entry.time.split(":")[1], 10);
+            if (!(minute in minuteMap)) {
+              minuteMap[minute] = {
+                time: minute.toString(),
+                frequency: parseFloat(entry.frequency.toFixed(6)),
+              };
+            }
+          });
+
+          const fixedLabels = Array.from({ length: 60 }, (_, i) => (i + 1).toString());
+          const aligned = fixedLabels.map((label) => minuteMap[parseInt(label)] ?? {
+            time: label,
+            frequency: 0,
+          });
+
+          setFrequencyData(aligned);
+        } else {
+          const formatted = data.data.map((entry) => ({
+            time: entry.time,
+            frequency: parseFloat(entry.frequency.toFixed(6)),
+          }));
+          setFrequencyData(formatted);
+        }
       })
       .catch((err) => console.error("Error fetching frequency stats:", err));
   }, [ownerId, timeRange]);
@@ -64,7 +110,7 @@ export default function Dashboard4({ ownerId, timeRange }) {
               <LineChart data={currentData}>
                 <XAxis dataKey="time" stroke="#fff" />
                 <YAxis stroke="#fff" />
-                <Tooltip />
+                <Tooltip formatter={formatTooltip} />
                 <Legend />
                 <Line type="monotone" dataKey="a1" stroke="#e91e63" name="A1" />
                 <Line type="monotone" dataKey="a2" stroke="#00bcd4" name="A2" />
@@ -74,7 +120,7 @@ export default function Dashboard4({ ownerId, timeRange }) {
               <BarChart data={currentData}>
                 <XAxis dataKey="time" stroke="#fff" />
                 <YAxis stroke="#fff" />
-                <Tooltip />
+                <Tooltip formatter={formatTooltip} />
                 <Legend />
                 <Bar dataKey="a1" fill="#e91e63" name="A1" />
                 <Bar dataKey="a2" fill="#00bcd4" name="A2" />
@@ -96,26 +142,17 @@ export default function Dashboard4({ ownerId, timeRange }) {
               <LineChart data={frequencyData}>
                 <XAxis dataKey="time" stroke="#fff" />
                 <YAxis stroke="#fff" />
-                <Tooltip />
+                <Tooltip formatter={formatTooltip} />
                 <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="frequency"
-                  stroke="#9c27b0"
-                  name="Frequency"
-                />
+                <Line type="monotone" dataKey="frequency" stroke="#9c27b0" name="Frequency" />
               </LineChart>
             ) : (
               <BarChart data={frequencyData}>
                 <XAxis dataKey="time" stroke="#fff" />
                 <YAxis stroke="#fff" />
-                <Tooltip />
+                <Tooltip formatter={formatTooltip} />
                 <Legend />
-                <Bar
-                  dataKey="frequency"
-                  fill="#9c27b0"
-                  name="Frequency"
-                />
+                <Bar dataKey="frequency" fill="#9c27b0" name="Frequency" />
               </BarChart>
             )}
           </ResponsiveContainer>

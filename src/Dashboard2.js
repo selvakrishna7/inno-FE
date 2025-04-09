@@ -7,22 +7,63 @@ export default function Dashboard2({ ownerId, timeRange }) {
 
   const DARK_ORANGE = "#ff6f00";
   const DARK_ORANGE_BG = "rgba(255, 111, 0, 0.3)";
+  const chartType = timeRange === "m" ? "line" : "bar";
 
-  const isMinuteRange = timeRange === "m";
-  const chartType = isMinuteRange ? "line" : "bar";
+  const getFixedLabels = () => {
+    if (timeRange === "m") return Array.from({ length: 60 }, (_, i) => (i + 1).toString());
+    if (timeRange === "h") return Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
+    if (timeRange === "d") return Array.from({ length: 30 }, (_, i) => (i + 1).toString());
+    if (timeRange === "mo") return Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+    if (timeRange === "y") {
+      const currentYear = new Date().getFullYear();
+      return Array.from({ length: 5 }, (_, i) => (currentYear - 4 + i).toString());
+    }
+    return [];
+  };
 
-  // Fetch Energy Consumption Stats
+  const extractLabel = (entryTime) => {
+    try {
+      if (timeRange === "m") return parseInt(entryTime.split(":")[1], 10).toString();
+      if (timeRange === "h") return entryTime.split(" ")[1].split(":")[0];
+      if (timeRange === "d") return parseInt(entryTime.split("-")[2], 10).toString();
+      if (timeRange === "mo") return parseInt(entryTime.split("-")[1], 10).toString();
+      if (timeRange === "y") return entryTime.split("-")[0];
+    } catch (error) {
+      console.warn("Invalid time format:", entryTime);
+    }
+    return entryTime;
+  };
+
   useEffect(() => {
     if (!ownerId || !timeRange) return;
-
     fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_energy_consumption/?owner=${ownerId}&range=${timeRange}`)
       .then((res) => res.json())
-      .then((data) => {
-        const timeLabels = data.data.map((entry) => entry.time);
-        const energyConsumed = data.data.map((entry) => entry.energy_diff);
+      .then((resData) => {
+        const rawData = resData.data;
+        const fixedLabels = getFixedLabels();
+        const energyMap = {};
+
+        if (timeRange === "m") {
+          let previous = null;
+          for (const entry of rawData) {
+            const minute = extractLabel(entry.time);
+            if (previous !== null && !(minute in energyMap)) {
+              const diff = parseFloat((entry.energy - previous).toFixed(3));
+              energyMap[minute] = diff > 0 ? diff : 0;
+            }
+            previous = entry.energy;
+          }
+        } else {
+          for (const entry of rawData) {
+            const label = extractLabel(entry.time);
+            energyMap[label] = entry.energy_diff ?? entry.energy ?? 0;
+          }
+        }
+
+        const energyConsumed = fixedLabels.map((label) => energyMap[label] ?? 0);
 
         setEnergyData({
-          labels: timeLabels,
+          labels: fixedLabels,
           datasets: [
             {
               label: "Energy Consumed (kWh)",
@@ -39,24 +80,32 @@ export default function Dashboard2({ ownerId, timeRange }) {
       .catch((err) => console.error("Error fetching energy consumption:", err));
   }, [ownerId, timeRange]);
 
-  // Fetch GHG Emissions
   useEffect(() => {
     if (!ownerId || !timeRange) return;
-
     fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_ghg_emission/?owner=${ownerId}&range=${timeRange}`)
       .then((res) => res.json())
-      .then((data) => {
-        const timeLabels = data.data.map((entry) => entry.time);
-        const ghg = data.data.map((entry) => entry.ghg_emission);
-        const energy = data.data.map((entry) => entry.energy_diff);
+      .then((resData) => {
+        const rawData = resData.data;
+        const fixedLabels = getFixedLabels();
+        const ghgMap = {};
+        const energyMap = {};
+
+        for (const entry of rawData) {
+          const label = extractLabel(entry.time);
+          ghgMap[label] = entry.ghg_emission;
+          energyMap[label] = entry.energy_diff ?? entry.energy ?? 0;
+        }
+
+        const ghgValues = fixedLabels.map((label) => ghgMap[label] ?? 0);
+        const energyValues = fixedLabels.map((label) => energyMap[label] ?? 0);
 
         setGhgData({
-          labels: timeLabels,
+          labels: fixedLabels,
           datasets: [
             {
               label: "GHG Emission (g)",
               type: chartType,
-              data: ghg,
+              data: ghgValues,
               borderColor: DARK_ORANGE,
               backgroundColor: DARK_ORANGE_BG,
               fill: true,
@@ -65,9 +114,9 @@ export default function Dashboard2({ ownerId, timeRange }) {
             {
               label: "Energy Used (kWh)",
               type: chartType,
-              data: energy,
-              borderColor: DARK_ORANGE,
-              backgroundColor: DARK_ORANGE_BG,
+              data: energyValues,
+              borderColor: "#4caf50",
+              backgroundColor: "rgba(76, 175, 80, 0.3)",
               fill: true,
               tension: 0.4,
             },
@@ -86,12 +135,23 @@ export default function Dashboard2({ ownerId, timeRange }) {
         display: true,
         text: titleText,
       },
+      tooltip: {
+        callbacks: {
+          label: (tooltipItem) => {
+            const value = tooltipItem.raw;
+            return `${tooltipItem.dataset.label}: ${value.toFixed(6)}`;
+          },
+        },
+      },
     },
     scales: {
       y: {
         title: {
           display: true,
           text: yLabel,
+        },
+        ticks: {
+          callback: (value) => value.toFixed(6),
         },
       },
       x: {
@@ -104,34 +164,59 @@ export default function Dashboard2({ ownerId, timeRange }) {
   });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      {!energyData ? (
-        <p>Loading energy consumption chart...</p>
-      ) : (
-        <div style={{ width: "800px", height: "400px", marginBottom: "2rem" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        gap: "2rem",
+        padding: "2rem",
+        overflowX: "auto",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <div
+        style={{
+          width: "700px",
+          height: "400px",
+          minWidth: "700px",
+          maxWidth: "700px",
+        }}
+      >
+        {!energyData ? (
+          <p>Loading energy consumption chart...</p>
+        ) : (
           <MyChartComponent
             chartData={energyData}
             chartOptions={chartBaseOptions(
-              `Energy Consumption Over Time (Owner ${ownerId})`,
+              `Energy Consumption (Owner ${ownerId})`,
               "Energy (kWh)"
             )}
           />
-        </div>
-      )}
+        )}
+      </div>
 
-      {!ghgData ? (
-        <p>Loading GHG emissions chart...</p>
-      ) : (
-        <div style={{ width: "800px", height: "400px", marginBottom: "2rem" }}>
+      <div
+        style={{
+          width: "700px",
+          height: "400px",
+          minWidth: "700px",
+          maxWidth: "700px",
+        }}
+      >
+        {!ghgData ? (
+          <p>Loading GHG emissions chart...</p>
+        ) : (
           <MyChartComponent
             chartData={ghgData}
             chartOptions={chartBaseOptions(
-              `GHG Emissions & Energy Usage (Owner ${ownerId})`,
+              `GHG Emissions & Energy (Owner ${ownerId})`,
               "Values (g / kWh)"
             )}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
