@@ -9,8 +9,6 @@ export default function Dashboard2({ ownerId, timeRange }) {
   const DARK_ORANGE_BG = "rgba(255, 111, 0, 0.3)";
   const chartType = timeRange === "m" ? "line" : "bar";
 
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
   const getFixedLabels = () => {
     if (timeRange === "m") return Array.from({ length: 60 }, (_, i) => (i + 1).toString());
     if (timeRange === "h") return Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
@@ -24,10 +22,8 @@ export default function Dashboard2({ ownerId, timeRange }) {
   };
 
   const getDisplayLabels = (labels) => {
-    if (timeRange === "month") {
-      return labels.map((label) => monthNames[parseInt(label, 10) - 1] || label);
-    }
-    return labels;
+    // Just return the numeric labels (e.g., 1 to 12 for months)
+    return labels.map((label) => parseInt(label, 10).toString());
   };
 
   const extractLabel = (entryTime) => {
@@ -35,7 +31,12 @@ export default function Dashboard2({ ownerId, timeRange }) {
       if (timeRange === "m") return parseInt(entryTime.split(":")[1], 10).toString();
       if (timeRange === "h") return entryTime.split(" ")[1].split(":")[0];
       if (timeRange === "d") return entryTime.split("-")[2].padStart(2, "0");
-      if (timeRange === "month") return entryTime.split("-")[1]; // e.g., "01", "02"
+      if (timeRange === "month") {
+        const date = new Date(entryTime);
+        if (!isNaN(date)) {
+          return (date.getMonth() + 1).toString().padStart(2, "0");
+        }
+      }
       if (timeRange === "y") return entryTime.split("-")[0];
     } catch (error) {
       console.warn("Invalid time format:", entryTime);
@@ -45,6 +46,7 @@ export default function Dashboard2({ ownerId, timeRange }) {
 
   useEffect(() => {
     if (!ownerId || !timeRange) return;
+
     fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_energy_consumption/?owner=${ownerId}&range=${timeRange}`)
       .then((res) => res.json())
       .then((resData) => {
@@ -92,6 +94,7 @@ export default function Dashboard2({ ownerId, timeRange }) {
 
   useEffect(() => {
     if (!ownerId || !timeRange) return;
+
     fetch(`${process.env.REACT_APP_BACKEND_URL}/api/get_ghg_emission/?owner=${ownerId}&range=${timeRange}`)
       .then((res) => res.json())
       .then((resData) => {
